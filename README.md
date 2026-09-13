@@ -66,8 +66,7 @@ curl http://localhost:8080/api/reservations \
   -H "Authorization: Bearer <token>"
 ```
 
-## Notes / things to review before production
-
+## Notes
 - Switch `spring.jpa.hibernate.ddl-auto` to `validate` and manage schema changes with Flyway or Liquibase.
 - Tighten CORS `allowedOriginPatterns` in `SecurityConfig` to your real frontend origin(s).
 - Rotate `JWT_SECRET` via a secrets manager (AWS Secrets Manager, Vault, etc.), not a plain env var, in real production infra.
