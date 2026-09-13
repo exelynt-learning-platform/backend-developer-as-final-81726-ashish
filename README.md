@@ -19,12 +19,16 @@ com.example.bookingsystem
 ## Security model
 
 - **Stateless JWT auth.** `POST /auth/login` returns a bearer token (subject = username, custom `roles` claim). `JWTFilter` runs once per request, validates the token, and populates the `SecurityContext` — no server-side session state.
+  
 - **BCrypt** (strength 12) for password hashing everywhere; raw passwords are never stored or logged.
 - **RBAC via `@PreAuthorize`** at the service layer (defense in depth — also mirrored at the controller layer for resources):
   - `ADMIN` → full CRUD on resources and reservations.
   - `USER` → read-only on resources; can create/view/manage only their **own** reservations.
+ 
 - **Identity spoofing is structurally prevented**, not just checked: `ReservationDTO.userId` is annotated `@JsonProperty(access = READ_ONLY)`, so Jackson silently drops any `userId` a client sends in the request body. The service layer always takes the owner from `SecurityContextHolder` (see `UserService#getCurrentAuthenticatedUser`).
+
 - **Data isolation** is enforced in `ReservationService#enforceOwnership`: a request for a reservation that doesn't exist returns `404`, and a request for a reservation that exists but belongs to someone else returns `403` (`UnauthorizedAccessException`), matching the spec. If you need to prevent id-enumeration (hiding *whether* a record exists from non-owners), collapse both cases to a single `404` instead.
+ 
 - **Global exception handling** (`@RestControllerAdvice`) returns a consistent JSON error shape (`timestamp`, `status`, `error`, `message`, `path`, and `details` for validation errors) for validation failures, not-found, bad credentials, and access-denied — plus a safety-net 500 handler that never leaks stack traces.
 
 ## Filtering / pagination / sorting
